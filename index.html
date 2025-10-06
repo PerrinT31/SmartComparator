@@ -1,3 +1,4 @@
+
 <!doctype html>
 <html lang="fr">
 <head>
@@ -81,68 +82,23 @@
     // ------------------------------
     // 1) Produits de DÉMO à la main
     // ------------------------------
-  const PRODUCTS = [
-  {
-    id: "kb300-bio",
-    name: "Polo Kariban Bio KB300",
-    price: 9.8,
-    quality: 90,
-    stock: 950,
-    leadTimeDays: 3,
-    labels: ["GOTS", "OEKO-TEX"],
-    keywords: "polo bio coton organique blanc col classique",
-  },
-  {
-    id: "ns720-relax",
-    name: "Sweat Native Spirit Relax NS720",
-    price: 21.5,
-    quality: 95,
-    stock: 480,
-    leadTimeDays: 5,
-    labels: ["GRS", "VEGAN"],
-    keywords: "sweat coton recyclé oversize lifestyle marine",
-  },
-  {
-    id: "ku110-cap",
-    name: "Casquette K-up Sport KU110",
-    price: 5.4,
-    quality: 80,
-    stock: 2100,
-    leadTimeDays: 2,
-    labels: ["RCS 100"],
-    keywords: "casquette sport polyester respirant noir running",
-  },
-  {
-    id: "pro901-tee",
-    name: "T-shirt Proact Performance PRO901",
-    price: 6.9,
-    quality: 88,
-    stock: 1750,
-    leadTimeDays: 4,
-    labels: ["OEKO-TEX"],
-    keywords: "t shirt technique sport respirant blanc running",
-  },
-  {
-    id: "kb510-lin",
-    name: "Chemise Lin Premium KB510",
-    price: 29.9,
-    quality: 92,
-    stock: 310,
-    leadTimeDays: 7,
-    labels: ["OEKO-TEX"],
-    keywords: "chemise lin homme été beige naturel",
-  },
-  {
-    id: "ns240-tote",
-    name: "Tote Bag Native Spirit NS240",
-    price: 3.8,
-    quality: 85,
-    stock: 3200,
-    leadTimeDays: 2,
-    labels: ["OCS BLENDED"],
-    keywords: "sac coton recyclé cabas eco totebag",
-  }
+const PRODUCTS = [
+  // --- T-shirts ---
+  { id:"ns310-bio", name:"T-shirt Native Spirit Bio NS310", price:6.9, quality:88, stock:2100, leadTimeDays:3, labels:["GOTS","OEKO-TEX"], keywords:"t shirt coton bio unisexe blanc" },
+  { id:"kb305-heavy", name:"T-shirt Kariban Heavy KB305", price:5.8, quality:85, stock:1400, leadTimeDays:2, labels:["OEKO-TEX"], keywords:"t shirt épais coton 190g homme noir" },
+  { id:"pro200-tech", name:"T-shirt Proact Tech PRO200", price:7.5, quality:90, stock:800, leadTimeDays:4, labels:["OEKO-TEX"], keywords:"t shirt sport respirant polyester bleu" },
+
+  // --- Sweats ---
+  { id:"ns720-relax", name:"Sweat Native Spirit Relax NS720", price:21.5, quality:95, stock:450, leadTimeDays:5, labels:["GRS","VEGAN"], keywords:"sweat oversize coton recyclé marine" },
+  { id:"kb420-classic", name:"Sweat Kariban Classic KB420", price:18.9, quality:90, stock:950, leadTimeDays:3, labels:["OEKO-TEX"], keywords:"sweat unisexe col rond coton molleton" },
+  { id:"pro500-zip", name:"Sweat Proact Zip PRO500", price:23.4, quality:92, stock:370, leadTimeDays:6, labels:["OEKO-TEX"], keywords:"sweat technique sport zippé gris chiné" },
+
+  // --- Polos ---
+  { id:"kb300-bio", name:"Polo Kariban Bio KB300", price:9.8, quality:90, stock:1100, leadTimeDays:3, labels:["GOTS","OEKO-TEX"], keywords:"polo bio coton organique blanc" },
+  { id:"kb400-premium", name:"Polo Kariban Premium KB400", price:12.4, quality:93, stock:680, leadTimeDays:5, labels:["OEKO-TEX"], keywords:"polo homme piqué double fil bleu" },
+  { id:"pro701-active", name:"Polo Proact Active PRO701", price:10.9, quality:88, stock:1500, leadTimeDays:4, labels:["OEKO-TEX"], keywords:"polo sport respirant polyester noir" }
 ];
+
 
     // ------------------------------
     // 2) Utilitaires score & format
