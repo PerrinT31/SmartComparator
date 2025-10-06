@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TopTex – Smart Comparator (démo statique)</title>
+  <style>
+    :root { --bg:#f6f7f9; --card:#fff; --text:#0f172a; --muted:#64748b; --brand:#1f51a8; --ok:#12a150; --warn:#eab308; --bad:#dc2626; }
+    *{box-sizing:border-box} body{margin:0;background:var(--bg);font-family:Inter,system-ui,Arial,sans-serif;color:var(--text)}
+    header{padding:28px 20px}
+    .wrap{max-width:1080px;margin:0 auto}
+    h1{margin:0 0 4px;font-size:26px;font-weight:700}
+    p.lead{margin:0;color:var(--muted)}
+    .panel{background:var(--card);border:1px solid #e5e7eb;border-radius:14px;padding:16px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+    .grid{display:grid;gap:12px}
+    @media(min-width:900px){ .grid-3{grid-template-columns:repeat(3,1fr)} .grid-2{grid-template-columns:1.3fr .7fr} }
+    label{font-size:12px;color:var(--muted);display:block;margin-bottom:6px}
+    input,select,button{width:100%;padding:10px 12px;border:1px solid #d1d5db;border-radius:10px;background:#fff;font:inherit}
+    input:focus,select:focus{outline:2px solid rgba(31,81,168,.2);border-color:var(--brand)}
+    .btn{background:var(--brand);color:#fff;border:none;cursor:pointer;font-weight:600}
+    .btn:hover{filter:brightness(1.05)}
+    .cards{display:grid;gap:14px}
+    @media(min-width:900px){ .cards{grid-template-columns:repeat(3,1fr)} }
+    .card{background:var(--card);border:1px solid #e5e7eb;border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px}
+    .title{font-weight:700}
+    .meta{color:var(--muted);font-size:13px}
+    .pill{display:inline-block;padding:4px 8px;border-radius:999px;background:#eef2ff;color:#334155;font-size:12px;margin-right:6px;margin-top:4px}
+    .score{font-weight:800;font-size:22px}
+    .score.ok{color:var(--ok)} .score.mid{color:var(--warn)} .score.bad{color:var(--bad)}
+    .hint{font-size:12px;color:var(--muted)}
+    footer{padding:32px 20px;color:var(--muted);text-align:center}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <h1>Smart Comparator – Démo statique</h1>
+      <p class="lead">Comparer 2–3 produits test (qualité / prix / disponibilité) et voir le meilleur choix en un coup d’œil.</p>
+    </div>
+  </header>
+
+  <main class="wrap" style="display:grid;gap:14px;padding:0 20px 28px">
+    <section class="panel grid grid-2" aria-label="Recherche">
+      <div class="grid" style="align-content:start">
+        <div class="grid" style="grid-template-columns:1fr 1fr;gap:12px">
+          <div>
+            <label for="qty">Quantité</label>
+            <input id="qty" type="number" min="1" value="200" />
+          </div>
+          <div>
+            <label for="deadline">Livrable avant</label>
+            <input id="deadline" type="date" />
+          </div>
+        </div>
+        <div>
+          <label for="query">Mot-clé (ex. polo blanc, bio…)</label>
+          <input id="query" type="text" placeholder="ex. polo blanc" />
+        </div>
+        <div class="hint">Astuce : laisse vide pour comparer tous les produits de test.</div>
+      </div>
+      <div class="grid" style="align-content:end">
+        <button id="search" class="btn">Comparer maintenant</button>
+        <div class="panel" style="background:#f9fafb">
+          <label>Pondérations du score</label>
+          <div class="grid" style="grid-template-columns:1fr 1fr 1fr;gap:10px">
+            <input id="wQuality" type="number" min="0" max="100" value="40" title="Qualité %" />
+            <input id="wPrice"   type="number" min="0" max="100" value="35" title="Prix %" />
+            <input id="wAvail"   type="number" min="0" max="100" value="25" title="Disponibilité %" />
+          </div>
+          <div class="hint">La somme doit faire 100. Plus tard : on verrouille automatiquement.</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="cards" id="results" aria-live="polite"></section>
+  </main>
+
+  <footer>Démo statique pour présentation interne – TopTex • Aucune donnée réelle utilisée.</footer>
+
+  <script>
+    // ------------------------------
+    // 1) Produits de DÉMO à la main
+    // ------------------------------
+    const PRODUCTS = [
+      { id:"k303-wht", name:"Polo K303 Blanc", price:8.9,  quality:86, stock:1200, leadTimeDays:2,  labels:["OEKO-TEX"],   keywords:"polo blanc coton" },
+      { id:"ns401-nvy", name:"Sweat NS401 Marine", price:14.5, quality:90, stock:320,  leadTimeDays:5,  labels:["GRS"],        keywords:"sweat marine recyclé" },
+      { id:"kb350-bio", name:"T-shirt KB350 Bio", price:7.2,  quality:80, stock:2200, leadTimeDays:3,  labels:["GOTS"],       keywords:"tee shirt bio blanc" }
+    ];
+
+    // ------------------------------
+    // 2) Utilitaires score & format
+    // ------------------------------
+    function clamp01(x){ return Math.max(0, Math.min(1, x)); }
+    function daysUntil(dateStr){
+      if(!dateStr) return Infinity;
+      const d = new Date(dateStr);
+      const now = new Date();
+      const diff = Math.ceil((d - now)/(1000*60*60*24));
+      return diff < 0 ? -1 : diff;
+    }
+    function formatEUR(n){ return n.toLocaleString("fr-FR",{style:"currency",currency:"EUR"}); }
+    function scoreProduct(p, weights){
+      // Normalisations simples pour la démo (à ajuster selon vraie data)
+      const priceNorm = clamp01(1 - p.price / 25);            // 0€ -> 1 ; 25€ -> 0
+      const qualityNorm = clamp01(p.quality / 100);           // 0-100 -> 0-1
+      const availNorm = clamp01(p.stock / 1000) * clamp01(1 - p.leadTimeDays/14); // stock élevé + délai court
+      const s = qualityNorm*weights.quality + priceNorm*weights.price + availNorm*weights.availability;
+      return Math.round(s * 100);
+    }
+    function scoreClass(v){ return v>=80 ? "ok" : v>=60 ? "mid" : "bad"; }
+
+    // ------------------------------
+    // 3) Filtrage & tri
+    // ------------------------------
+    function compute(query, qty, deadline, weights){
+      const days = daysUntil(deadline);
+      return PRODUCTS
+        .filter(p=>{
+          const q = (query||"").trim().toLowerCase();
+          const matches = !q || p.name.toLowerCase().includes(q) || p.keywords.includes(q);
+          const enoughStock = qty ? p.stock >= qty : true;
+          const meetDeadline = (days === Infinity) ? true : (p.leadTimeDays <= days && days >= 0);
+          return matches && enoughStock && meetDeadline;
+        })
+        .map(p=>({ ...p, score: scoreProduct(p, weights) }))
+        .sort((a,b)=> b.score - a.score)
+        .slice(0,3);
+    }
+
+    // ------------------------------
+    // 4) Rendu UI
+    // ------------------------------
+    const elResults = document.getElementById("results");
+    function render(list){
+      elResults.innerHTML = "";
+      if(!list.length){
+        elResults.innerHTML = `<div class="panel">Aucun résultat avec ces critères. Essaie d'élargir la recherche.</div>`;
+        return;
+      }
+      list.forEach(p=>{
+        const lbls = p.labels.map(l=>`<span class="pill">${l}</span>`).join("");
+        elResults.insertAdjacentHTML("beforeend", `
+          <article class="card" aria-label="${p.name}">
+            <div class="title">${p.name}</div>
+            <div class="meta">ID: ${p.id}</div>
+            <div class="grid" style="grid-template-columns:1fr 1fr;gap:8px">
+              <div><label>Prix</label><div><strong>${formatEUR(p.price)}</strong> / pièce</div></div>
+              <div><label>Stock</label><div><strong>${p.stock}</strong> dispo</div></div>
+              <div><label>Délai estimé</label><div><strong>${p.leadTimeDays} j</strong></div></div>
+              <div><label>Qualité (démo)</label><div><strong>${p.quality}/100</strong></div></div>
+            </div>
+            <div><label>Labels</label><div>${lbls || "<span class='meta'>—</span>"}</div></div>
+            <div><label>Score</label><div class="score ${scoreClass(p.score)}">${p.score}/100</div></div>
+            <button class="btn" onclick="alert('Démo: génération de devis à venir')">Générer mon devis</button>
+          </article>
+        `);
+      });
+    }
+
+    // ------------------------------
+    // 5) Interactions
+    // ------------------------------
+    const $ = id => document.getElementById(id);
+    function getWeights(){
+      const q = parseFloat($("wQuality").value||0)/100;
+      const p = parseFloat($("wPrice").value||0)/100;
+      const a = parseFloat($("wAvail").value||0)/100;
+      const sum = q+p+a || 1;
+      return { quality: q/sum, price: p/sum, availability: a/sum };
+    }
+    function run(){
+      const list = compute($("query").value, parseInt($("qty").value||0,10), $("deadline").value, getWeights());
+      render(list);
+    }
+    $("search").addEventListener("click", run);
+    // Init : deadline à +7 jours pour la démo
+    const d = new Date(); d.setDate(d.getDate()+7); $("deadline").value = d.toISOString().slice(0,10);
+    run();
+  </script>
+</body>
+</html>
